@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script src="https://cloudflare.com"></script>
     <title>Unity WebGL Player | Cargame</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
@@ -24,6 +25,24 @@
       </div>
     </div>
     <script>
+      const originalFetch = window.fetch;
+      window.fetch = async function(url, options) {
+        const response = await originalFetch(url, options);
+        const requestUrl = typeof url === 'string' ? url : (url && url.url ? url.url : '');
+        if (requestUrl.endsWith('.gz')) {
+          const buffer = await response.arrayBuffer();
+          const decompressed = pako.ungzip(new Uint8Array(buffer));
+          const contentType = requestUrl.includes('.wasm') ? 'application/wasm' : 
+                              requestUrl.includes('.js') ? 'application/javascript' : 'application/octet-stream';
+          return new Response(decompressed, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: { 'Content-Type': contentType }
+          });
+        }
+        return response;
+      };
+
       var container = document.querySelector("#unity-container");
       var canvas = document.querySelector("#unity-canvas");
       var loadingBar = document.querySelector("#unity-loading-bar");
