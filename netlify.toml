@@ -1,0 +1,22 @@
+[build]
+  publish = "."
+
+# Unity WebGL build is pre-compressed with gzip. The browser must be told the
+# files are gzip-encoded so it decompresses them transparently.
+[[headers]]
+  for = "/build/build3.framework.js.gz"
+  [headers.values]
+    Content-Encoding = "gzip"
+    Content-Type = "application/javascript"
+
+[[headers]]
+  for = "/build/build3.wasm.gz"
+  [headers.values]
+    Content-Encoding = "gzip"
+    Content-Type = "application/wasm"
+
+[[headers]]
+  for = "/build/build3.data.gz"
+  [headers.values]
+    Content-Encoding = "gzip"
+    Content-Type = "application/octet-stream"
