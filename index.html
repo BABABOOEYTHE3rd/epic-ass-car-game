@@ -87,7 +87,6 @@
         height: 100% !important;
       }
 
-      /* Custom Modern Loading Overlay */
       #unity-loading-bar {
         position: absolute;
         inset: 0;
@@ -135,7 +134,6 @@
         font-variant-numeric: tabular-nums;
       }
 
-      /* Warning / Error Banner */
       #unity-warning {
         position: absolute;
         top: 16px;
@@ -169,7 +167,6 @@
         border: 1px solid #fbbf24;
       }
 
-      /* Sleek Control Bar Footer */
       #unity-footer {
         display: flex;
         align-items: center;
@@ -267,6 +264,34 @@
     </div>
 
     <script>
+      // Intercept fetch to transparently decompress .gz Unity files in the browser
+      const originalFetch = window.fetch;
+      window.fetch = async function (resource, init) {
+        const url = typeof resource === "string" ? resource : resource.url;
+        const response = await originalFetch(resource, init);
+
+        // Only decompress if the server didn't already set Content-Encoding: gzip
+        if (url.endsWith(".gz") && response.headers.get("Content-Encoding") !== "gzip") {
+          let contentType = "application/octet-stream";
+          if (url.endsWith(".js.gz")) contentType = "application/javascript";
+          else if (url.endsWith(".wasm.gz")) contentType = "application/wasm";
+
+          const decompressedStream = response.body.pipeThrough(
+            new DecompressionStream("gzip")
+          );
+          const headers = new Headers(response.headers);
+          headers.set("Content-Type", contentType);
+          headers.delete("Content-Length");
+
+          return new Response(decompressedStream, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: headers,
+          });
+        }
+        return response;
+      };
+
       const container = document.querySelector("#unity-container");
       const canvas = document.querySelector("#unity-canvas");
       const loadingBar = document.querySelector("#unity-loading-bar");
